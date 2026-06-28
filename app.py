@@ -63,7 +63,7 @@ def responder(texto):
         return "No pude leer el inventario. Verifica el archivo Excel."
     if t in ["hola", "hi", "ayuda", "help", "menu"]:
         return (
-            "Hola! Soy el bot de inventario de bodega.\n\n"
+            "Hola! Soy *Maquina*, tu bot de inventario de bodega.\n\n"
             "Comandos disponibles:\n"
             "  stock [item] - ver disponibilidad\n"
             "  buscar [item] - buscar por nombre o ID\n"
