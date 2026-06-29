@@ -34,7 +34,7 @@ def get_sheet():
     creds_dict = json.loads(GOOGLE_CREDS_JSON)
     creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
     client = gspread.authorize(creds)
-    return client.open_by_key(SPREADSHEET_ID).worksheet("Inventario")
+    return client.open_by_key(SPREADSHEET_ID).get_worksheet(0)
 
 def cargar_inventario():
     try:
