@@ -9,7 +9,7 @@ from difflib import get_close_matches
 
 app = Flask(__name__)
 
-VERIFY_TOKEN 4= os.environ.get("WA_VERIFY_TOKEN", "bodega_inventario_2024")
+VERIFY_TOKEN = os.environ.get("WA_VERIFY_TOKEN", "bodega_inventario_2024")
 ACCESS_TOKEN   = os.environ.get("WA_ACCESS_TOKEN", "")
 PHONE_ID       = os.environ.get("WA_PHONE_NUMBER_ID", "")
 SPREADSHEET_ID = os.environ.get("SPREADSHEET_ID", "")
@@ -123,7 +123,7 @@ def agregar_item(texto):
         return f"\u274c Categor\u00eda '{categoria}' no v\u00e1lida.\nUsa: {', '.join(cats_validas)}"
     estados_validos = ["OK", "En uso", "Parcial", "Cr\u00edtico"]
     if estado not in estados_validos:
-        return f"\u274c Estado '{estado}' no v\u00e1lido.\nUsa: {`', 'j`.join(estados_validos)}"
+        return f"\u274c Estado '{estado}' no v\u00e1lido.\nUsa: {', '.join(estados_validos)}"
 
     try:
         sheet = get_sheet()
