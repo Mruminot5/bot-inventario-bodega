@@ -9,24 +9,23 @@ from difflib import get_close_matches
 
 app = Flask(__name__)
 
-VERIFY_TOKEN     = os.environ.get("WA_VERIFY_TOKEN", "bodega_inventario_2024")
-ACCESS_TOKEN     = os.environ.get("WA_ACCESS_TOKEN", "")
-PHONE_ID         = os.environ.get("WA_PHONE_NUMBER_ID", "")
-SPREADSHEET_ID   = os.environ.get("SPREADSHEET_ID", "")
+VERIFY_TOKEN 4= os.environ.get("WA_VERIFY_TOKEN", "bodega_inventario_2024")
+ACCESS_TOKEN   = os.environ.get("WA_ACCESS_TOKEN", "")
+PHONE_ID       = os.environ.get("WA_PHONE_NUMBER_ID", "")
+SPREADSHEET_ID = os.environ.get("SPREADSHEET_ID", "")
 GOOGLE_CREDS_JSON = os.environ.get("GOOGLE_CREDENTIALS", "{}")
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
-# Columnas del Sheet (fila 2 = encabezados)
 COL_ID     = "ID"
-COL_NOMBRE = "Nombre del Ãtem"
-COL_CAT    = "CategorÃ­a"
-COL_TOTAL  = "Stock Total"
+COL_NOMBRE = "Nombre del \u00cdtem"
+COL_CAT    = "Categor\u00eda"
+COL_TOTAL = "Stock Total"
 COL_DISP   = "Disponible"
 COL_USO    = "En Uso"
-COL_REP    = "En ReparaciÃ³n"
+COL_REP    = "En Reparaci\u00f3n"
 COL_ESTADO = "Estado"
-COL_UBIC   = "UbicaciÃ³n"
+COL_UBIC   = "Ubicaci\u00f3n"
 
 COLUMNAS_ORDEN = [COL_ID, COL_NOMBRE, COL_CAT, COL_TOTAL, COL_DISP, COL_USO, COL_REP, COL_ESTADO, COL_UBIC]
 
@@ -42,13 +41,11 @@ def cargar_inventario():
         data = sheet.get_all_values()
         if len(data) < 2:
             return None
-        # Fila 1 = tÃ­tulo de la hoja, Fila 2 = encabezados, Fila 3+ = datos
         headers = data[1]
         rows = data[2:]
         df = pd.DataFrame(rows, columns=headers)
         df.columns = df.columns.str.strip()
         df = df[df[COL_ID].str.strip() != ""]
-        # Convertir columnas numÃ©ricas
         for col in [COL_TOTAL, COL_DISP, COL_USO, COL_REP]:
             df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0).astype(int)
         return df
@@ -77,78 +74,75 @@ def buscar_item(df, consulta):
 
 def formato_item(item):
     estado = str(item.get(COL_ESTADO, ""))
-    emoji = {"OK": "â", "En uso": "ðµ", "Parcial": "ð¡", "CrÃ­tico": "ð´"}.get(estado, "âª")
+    emoji = {"OK": "\u2705", "En uso": "\u1f535", "Parcial": "\u1f7e1", "Cr\u00edtico": "\u1f534"}.get(estado, "\u26fb")
     return (
         f"{emoji} *{item[COL_NOMBRE]}* ({item[COL_ID]})\n"
-        f"â¢ CategorÃ­a: {item.get(COL_CAT, '')}\n"
-        f"â¢ Stock total: {item.get(COL_TOTAL, 0)}\n"
-        f"â¢ Disponible: {item.get(COL_DISP, 0)}\n"
-        f"â¢ En uso: {item.get(COL_USO, 0)}\n"
-        f"â¢ En reparaciÃ³n: {item.get(COL_REP, 0)}\n"
-        f"â¢ Estado: {estado}\n"
-        f"â¢ UbicaciÃ³n: {item.get(COL_UBIC, '')}"
+        f"\u2022 Categor\u00eda: {item.get(COL_CAT, '')}\n"
+        f"\u2022 Stock total: {item.get(COL_TOTAL, 0)}\n"
+        f"\u2022 Disponible: {item.get(COL_DISP, 0)}\n"
+        f"\u2022 En uso: {item.get(COL_USO, 0)}\n"
+        f"\u2022 En reparaci\u00f3n: {item.get(COL_REP, 0)}\n"
+        f"\u2022 Estado: {estado}\n"
+        f"\u2022 Ubicaci\u00f3n: {item.get(COL_UBIC, '')}"
     )
 
 AYUDA_AGREGAR = (
-    "ð *Formato para agregar un Ã­tem:*\n\n"
-    "agregar ID | Nombre | CategorÃ­a | Stock Total | Disponible | En Uso | En ReparaciÃ³n | Estado | UbicaciÃ³n\n\n"
-    "ð *Ejemplo:*\n"
+    "\u1f4cb *Formato para agregar un \u00edtem:*\n\n"
+    "agregar ID | Nombre | Categor\u00eda | Stock Total | Disponible | En Uso | En Reparaci\u00f3n | Estado | Ubicaci\u00f3n\n\n"
+    "\u1f4cd *Ejemplo:*\n"
     "_agregar H012 | Martillo grande | Herramientas | 5 | 4 | 1 | 0 | OK | Estante A_\n\n"
-    "ð *CategorÃ­as vÃ¡lidas:* Herramientas, Insumos, EPP, Repuestos\n"
-    "ð *Estados vÃ¡lidos:* OK, En uso, Parcial, CrÃ­tico"
+    "\u1f4c2 *Categor\u00edas v\u00e1lidas:* Herramientas, Insumos, EPP, Repuestos\n"
+    "\u1f516 *Estados v\u00e1lidos:* OK, En uso, Parcial, Cr\u00edtico"
 )
 
 def agregar_item(texto):
     partes = [p.strip() for p in texto.split("|")]
     if len(partes) < 9:
-        return f"â Faltan campos. Se necesitan exactamente 9 campos.\n\n" + AYUDA_AGREGAR
+        return f"\u274c Faltan campos. Se necesitan exactamente 9 campos.\n\n" + AYUDA_AGREGAR
 
     item_id, nombre, categoria, stock_str, disp_str, uso_str, rep_str, estado, ubicacion = \
         partes[0], partes[1], partes[2], partes[3], partes[4], partes[5], partes[6], partes[7], partes[8]
 
-    # Validar vacÃ­os
-    campos = [("ID", item_id), ("Nombre", nombre), ("CategorÃ­a", categoria),
+    campos = [("ID", item_id), ("Nombre", nombre), ("Categor\u00eda", categoria),
               ("Stock Total", stock_str), ("Disponible", disp_str), ("En Uso", uso_str),
-              ("En ReparaciÃ³n", rep_str), ("Estado", estado), ("UbicaciÃ³n", ubicacion)]
+              ("En Reparaci\u00f3n", rep_str), ("Estado", estado), ("Ubicaci\u00f3n", ubicacion)]
     for campo, valor in campos:
         if not valor:
-            return f"â El campo *{campo}* no puede estar vacÃ­o.\n\n" + AYUDA_AGREGAR
+            return f"\u274c El campo *{campo}* no puede estar vac\u00edo.\n\n" + AYUDA_AGREGAR
 
-    # Validar numÃ©ricos
     try:
         stock = int(stock_str)
         disp  = int(disp_str)
         uso   = int(uso_str)
         rep   = int(rep_str)
     except ValueError:
-        return "â Stock Total, Disponible, En Uso y En ReparaciÃ³n deben ser nÃºmeros enteros."
+        return "\u274c Stock Total, Disponible, En Uso y En Reparaci\u00f3n deben ser n\u00fameros enteros."
 
-    # Validar categorÃ­a y estado
     cats_validas = ["Herramientas", "Insumos", "EPP", "Repuestos"]
     if categoria not in cats_validas:
-        return f"â CategorÃ­a '{categoria}' no vÃ¡lida.\nUsa: {{', '.join(cats_validas)}"
-    estados_validos = ["OK", "En uso", "Parcial", "CrÃ­tico"]
+        return f"\u274c Categor\u00eda '{categoria}' no v\u00e1lida.\nUsa: {', '.join(cats_validas)}"
+    estados_validos = ["OK", "En uso", "Parcial", "Cr\u00edtico"]
     if estado not in estados_validos:
-        return f"â Estado '{estado}' no vÃ¡lido.\nUsa: {', '.join(estados_validos)}"
+        return f"\u274c Estado '{estado}' no v\u00e1lido.\nUsa: {`', 'j`.join(estados_validos)}"
 
     try:
         sheet = get_sheet()
         sheet.append_row([item_id, nombre, categoria, stock, disp, uso, rep, estado, ubicacion])
         return (
-            f"â *Ãtem agregado al inventario:*\n"
-            f"â¢ ID: {item_id}\n"
-            f"â¢ Nombre: {nombre}\n"
-            f"â¢ CategorÃ­a: {categoria}\n"
-            f"â¢ Stock Total: {stock}\n"
-            f"â¢ Disponible: {disp}\n"
-            f"â¢ En Uso: {uso}\n"
-            f"â¢ En ReparaciÃ³n: {rep}\n"
-            f"â¢ Estado: {estado}\n"
-            f"â¢ UbicaciÃ³n: {ubicacion}\n\n"
-            f"ð Puedes ver el inventario actualizado en Google Sheets."
+            f"\u2745 *\u00edtem agregado al inventario:*\n"
+            f"\u2022 ID: {item_id}\n"
+            f"\u2022 Nombre: {nombre}\n"
+            f"\u2022 Categor\u00eda: {categoria}\n"
+            f"\u2022 Stock Total: {stock}\n"
+            f"\u2022 Disponible: {disp}\n"
+            f"\u2022 En Uso: {uso}\n"
+            f"\u2022 En Reparaci\u00f3n: {rep}\n"
+            f"\u2022 Estado: {estado}\n"
+            f"\u2022 Ubicaci\u00f3n: {ubicacion}\n\n"
+            f"\u1f4ca Puedes ver el inventario actualizado en Google Sheets."
         )
     except Exception as e:
-        return f"â Error al guardar en Google Sheets: {str(e)}"
+        return f"\u274c Error al guardar en Google Sheets: {str(e)}"
 
 def responder(texto):
     t = texto.lower().strip()
@@ -160,20 +154,20 @@ def responder(texto):
 
     df = cargar_inventario()
     if df is None:
-        return "â No pude leer el inventario. Verifica la conexiÃ³n con Google Sheets."
+        return "\u274c No pude leer el inventario. Verifica la conexi\u00f3n con Google Sheets."
 
-    if t in ["hola", "hi", "ayuda", "help", "menu", "inicio", "menÃº"]:
+    if t in ["hola", "hi", "ayuda", "help", "menu", "inicio", "men\u00fa"]:
         return (
-            "ð Hola! Soy *Maquina*, tu bot de inventario de bodega.\n\n"
+            "\u1f44b Hola! Soy *Maquina*, tu bot de inventario de bodega.\n\n"
             "Puedes preguntarme:\n"
-            "â¢ *stock [Ã­tem]* â ver disponibilidad\n"
-            "â¢ *buscar [Ã­tem]* â buscar por nombre o ID\n"
-            "â¢ *agregar* â agregar un Ã­tem nuevo\n"
-            "â¢ *reparaciÃ³n* â Ã­tems en reparaciÃ³n\n"
-            "â¢ *en uso* â Ã­tems en uso\n"
-            "â¢ *crÃ­tico* â Ã­tems con stock crÃ­tico\n"
-            "â¢ *resumen* â dashboard general\n"
-            "â¢ *herramientas / insumos / epp / repuestos*\n\n"
+            "\u2022 *stock [\u00edtem]* \u2192 ver disponibilidad\n"
+            "\u2022 *buscar [\u00edtem]* \u2192 buscar por nombre o ID\n"
+            "\u2022 *agregar* \u2192 agregar un \u00edtem nuevo\n"
+            "\u2022 *reparaci\u00f3n* \u2192 \u00edtems en reparaci\u00f3n\n"
+            "\u2022 *en uso* \u2192 \u00edtems en uso\n"
+            "\u2022 *cr\u00edtico* \u2192 \u00edtems con stock cr\u00edtico\n"
+            "\u2022 *resumen* \u2192 dashboard general\n"
+            "\u2022 *herramientas / insumos / epp / repuestos*\n\n"
             "Ejemplo: _stock taladro_ o _buscar H001_"
         )
 
@@ -181,48 +175,48 @@ def responder(texto):
         total = len(df)
         ok  = (df[COL_ESTADO] == "OK").sum()
         uso = (df[COL_ESTADO] == "En uso").sum()
-        rep = df[COL_ESTADO].isin(["Parcial", "CrÃ­tico"]).sum()
-        cats = df[COL_CAT]value_counts()
-        lineas = [f"ð *Resumen de inventario*\nTotal: {total} | â OK: {ok} | ðµ En uso: {uso} | ð¡ Incidencias: {rep}\n"]
+        rep = df[COL_ESTADO].isin(["Parcial", "Cr\u00edtico"]).sum()
+        cats = df[COL_CAT].value_counts()
+        lineas = [f"\u1f4ca *Resumen de inventario*\nTotal: {total} | \u2745 OK: {ok} | \u1f535 En uso: {uso} | \u1f7e1 Incidencias: {rep}\n"]
         for cat, n in cats.items():
-            lineas.append(f"  â¢ {cat}: {n} Ã­tems")
+            lineas.append(f" \u2022 {cat}: {n} \u00edtems")
         return "\n".join(lineas)
 
-    if t in ["reparacion", "reparaciÃ³n", "en reparacion", "en reparaciÃ³n", "reparar"]:
+    if t in ["reparacion", "reparaci\u00f3n", "en reparacion", "en reparaci\u00f3n", "reparar"]:
         sub = df[df[COL_REP] > 0]
         if sub.empty:
-            return "â No hay Ã­tems en reparaciÃ³n actualmente."
-        lineas = [f"ð§ *Ãtems en reparaciÃ³n ({len(sub)}):*"]
+            return "\u2745 No hay \u00edtems en reparaci\u00f3n actualmente."
+        lineas = [f"\u1f527 *\u00edtems en reparaci\u00f3n ({len(sub)}):*"]
         for _, row in sub.iterrows():
-            lineas.append(f"  â¢ {row[COL_NOMBRE]} ({row[COL_ID]}): {row[COL_REP]} unid.")
+            lineas.append(f" \u2022 {row[COL_NOMBRE]} ({row[COL_ID]}): {row[COL_REP]} unid.")
         return "\n".join(lineas)
 
     if t in ["en uso", "uso"]:
         sub = df[df[COL_USO] > 0]
         if sub.empty:
-            return "â¹ï¸ No hay Ã­tems actualmente en uso."
-        lineas = [f"ðµ *Ãtems en uso ({len(sub)}):*"]
+            return "\u2139\ufe0f No hay \u00edtems actualmente en uso."
+        lineas = [f"\u1f535 *\u00edtems en uso ({len(sub)}):*"]
         for _, row in sub.iterrows():
-            lineas.append(f"  â¢ {row[COL_NOMBRE]} ({row[COL_ID]}): {row[COL_USO]} unid.")
+            lineas.append(f" \u2022 {row[COL_NOMBRE]} ({row[COL_ID]}): {row[COL_USO]} unid.")
         return "\n".join(lineas)
 
-    if t in ["critico", "crÃ­tico", "stock critico", "stock crÃ­tico"]:
-        sub = df[df[COL_ESTADO].isin(["CrÃ­tico"])]
+    if t in ["critico", "cr\u00edtico", "stock critico", "stock cr\u00edtico"]:
+        sub = df[df[COL_ESTADO].isin(["Cr\u00edtico"])]
         if sub.empty:
-            return "â No hay Ã­tems en estado crÃ­tico."
-        lineas = [f"ð´ *Ãtems crÃ­ticos ({len(sub)}):*"]
+            return "\u2745 No hay \u00edtems en estado cr\u00edtico."
+        lineas = [f"\u1f534 *\u00edtems cr\u00edticos ({len(sub)}):*"]
         for _, row in sub.iterrows():
-            lineas.append(f"  â¢ {row[COL_NOMBRE]} ({row[COL_ID]}): stock {row[COL_TOTAL]}")
+            lineas.append(f" \u2022 {row[COL_NOMBRE]} ({row[COL_ID]}): stock {row[COL_TOTAL]}")
         return "\n".join(lineas)
 
     for key, cat in {"herramientas": "Herramientas", "insumos": "Insumos", "epp": "EPP", "repuestos": "Repuestos"}.items():
         if t == key:
             sub = df[df[COL_CAT] == cat]
             if sub.empty:
-                return f"No hay Ã­tems en {cat}."
-            lineas = [f"ð¦ *{cat} ({len(sub)} Ã­tems):*"]
+                return f"No hay \u00edtems en {cat}."
+            lineas = [f"\u1f4e6 *{cat} ({len(sub)} \u00edtems):*"]
             for _, row in sub.iterrows():
-                lineas.append(f"  â¢ {row[COL_NOMBRE]} ({row[COL_ID]}): {row[COL_DISP]} disp.")
+                lineas.append(f" \u2022 {row[COL_NOMBRE]} ({row[COL_ID]}): {row[COL_DISP]} disp.")
             return "\n".join(lineas)
 
     for prefix in ["stock ", "buscar ", "ver ", "info "]:
@@ -231,13 +225,13 @@ def responder(texto):
             item = buscar_item(df, consulta)
             if item is not None:
                 return formato_item(item)
-            return f"ð No encontrÃ© Ã­tem con '{consulta}'.\nIntenta con el ID (ej: H001) o parte del nombre."
+            return f"\u1f50d No encontr\u00e9 \u00edtem con '{consulta}'.\nIntenta con el ID (ej: H001) o parte del nombre."
 
     item = buscar_item(df, t)
     if item is not None:
         return formato_item(item)
 
-    return "ð¤ No entendÃ­ esa consulta.\nEscribe *ayuda* para ver los comandos disponibles."
+    return "\u1f914 No entend\u00ed esa consulta.\nEscribe *ayuda* para ver los comandos disponibles."
 
 def send_whatsapp_message(to, body):
     url = f"https://graph.facebook.com/v19.0/{PHONE_ID}/messages"
@@ -251,8 +245,8 @@ def send_whatsapp_message(to, body):
 
 @app.route("/webhook", methods=["GET"])
 def verify():
-    mode = request.args.get("hub.mode")
-    token = request.args.get("hub.verify_token")
+    mode      = request.args.get("hub.mode")
+    token     = request.args.get("hub.verify_token")
     challenge = request.args.get("hub.challenge")
     if mode == "subscribe" and token == VERIFY_TOKEN:
         return challenge, 200
@@ -262,7 +256,7 @@ def verify():
 def webhook():
     data = request.get_json()
     try:
-        msg = data["entry"][0]["changes"][0]["value"]["messages"][0]
+        msg  = data["entry"][0]["changes"][0]["value"]["messages"][0]
         body = msg.get("text", {}).get("body", "")
         if body:
             send_whatsapp_message(msg["from"], responder(body))
@@ -272,7 +266,7 @@ def webhook():
 
 @app.route("/", methods=["GET"])
 def index():
-    return "Maquina - Bot de inventario activo â", 200
+    return "Maquina - Bot de inventario activo \u2705", 200
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
