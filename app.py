@@ -255,13 +255,18 @@ def verify():
 @app.route("/webhook", methods=["POST"])
 def webhook():
     data = request.get_json()
+    print(f"WEBHOOK: {json.dumps(data)[:200]}", flush=True)
     try:
         msg  = data["entry"][0]["changes"][0]["value"]["messages"][0]
         body = msg.get("text", {}).get("body", "")
+        print(f"MSG from={msg['from']} body={body}", flush=True)
         if body:
-            send_whatsapp_message(msg["from"], responder(body))
-    except (KeyError, IndexError):
-        pass
+            respuesta = responder(body)
+            print(f"RESPUESTA: {respuesta[:80]}", flush=True)
+            status, resp = send_whatsapp_message(msg["from"], respuesta)
+            print(f"WA_API status={status} resp={json.dumps(resp)[:200]}", flush=True)
+    except Exception as e:
+        print(f"ERROR: {e}", flush=True)
     return '{"status":"ok"}', 200
 
 @app.route("/", methods=["GET"])
