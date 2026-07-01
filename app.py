@@ -185,7 +185,7 @@ def responder(texto):
             "  en uso - items en uso\n"
             "  critico - stock cr\u00edtico\n"
             "  resumen - dashboard general\n"
-            "  herramientas / insumos / epp / repuestos\n\n"
+            "  herramientas / insumos / epp / repuestos / mobiliario / energia\n\n"
             "*Movimientos:*\n"
             "  retirar [item] [cantidad]\n"
             "  devolver [item] [cantidad]\n\n"
@@ -224,7 +224,7 @@ def responder(texto):
         for _, row in sub.iterrows():
             lineas.append(f"  - {row[COL_NOMBRE]} ({row[COL_ID]}): {row[COL_DISP]} disp.")
         return "\n".join(lineas)
-    for key, cat in {"herramientas": "Herramientas", "insumos": "Insumos", "epp": "EPP", "repuestos": "Repuestos"}.items():
+    for key, cat in {"herramientas": "Herramientas", "insumos": "Insumos", "epp": "EPP", "repuestos": "Repuestos", "mobiliario": "Mobiliario", "energia": "Energ\u00eda"}.items():
         if t == key:
             sub = df[df[COL_CAT] == cat]
             if sub.empty:
